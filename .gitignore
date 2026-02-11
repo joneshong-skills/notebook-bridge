@@ -1,0 +1,2 @@
+# Prevent committing auto-generated memory files (may contain PII)
+memory/
