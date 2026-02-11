@@ -14,6 +14,14 @@ Format: `- **[Topic]**: [Learning] (date: YYYY-MM-DD)`
 - **Source counter**: Shows in dialog as "N/300" format (Plus plan, 300 max) (date: 2026-02-11)
 - **Existing notebooks**: KSA, 啟動未來教育, 簡報視覺識別, 揭秘帕蘭提爾, 文化大學勁風, Entities設計, 潛水風險, Untitled (date: 2026-02-11)
 
+## Download Patterns (2026-02-11)
+
+- **Infographic download method**: `page.context().request.get(url)` fetches the image correctly (returns PNG buffer with full auth). But Playwright MCP sandbox blocks `require('fs')`, so the buffer cannot be saved directly. Solution: extract cookies → Python `urllib.request` with critical headers (date: 2026-02-11)
+- **Critical download headers**: `Referer: https://notebooklm.google.com/` and `Sec-Fetch-Dest: image` + `Sec-Fetch-Mode: no-cors` + `Sec-Fetch-Site: cross-site` are REQUIRED. Without them, `lh3.googleusercontent.com` returns HTML instead of the image (date: 2026-02-11)
+- **Cookie extraction**: Use `page.context().cookies('https://lh3.googleusercontent.com')` + `page.context().cookies('https://google.com')`, deduplicate by name, build `name=value; ...` string (date: 2026-02-11)
+- **Infographic image hosting**: Images at `lh3.googleusercontent.com/notebooklm/` with URL params like `=w2752-d-h1536-mp2?authuser=0` (date: 2026-02-11)
+- **Failed approaches**: Playwright download event (blocked by macOS native dialog), CDP `setDownloadBehavior` (browser target not allowed), `page.evaluate(fetch())` (CORS blocks cross-origin), canvas `toDataURL` (cross-origin taints canvas), curl without Referer/Sec-Fetch headers (returns HTML) (date: 2026-02-11)
+
 ## Functional Test Results (2026-02-11)
 
 - **Flow A (Create notebook)**: Creating notebook auto-opens Add Source dialog with URL param `?addSource=true` (date: 2026-02-11)
