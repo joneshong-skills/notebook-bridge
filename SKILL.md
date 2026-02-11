@@ -223,7 +223,34 @@ These headers are **required** — without them the server returns HTML instead 
 | `curl` without `Referer`/`Sec-Fetch-*` | Returns HTML instead of image |
 | CDP `Browser.setDownloadBehavior` | Playwright MCP blocks CDP browser-level targets |
 
-### Alternative: Verify with context.request
+### Alternative A: Chrome AppleScript (Recommended when Playwright unavailable)
+
+When Playwright MCP is disconnected but Chrome is logged into Google:
+
+1. **Find image URLs** via AppleScript JS in the NotebookLM tab:
+   ```applescript
+   execute theTab javascript "
+       Array.from(document.querySelectorAll('img'))
+       .filter(i => i.src.includes('lh3.googleusercontent.com/notebooklm'))
+       .map(i => i.src)
+   "
+   ```
+
+2. **For each URL**, open in new Chrome tab → wait → canvas extract → close:
+   ```python
+   # Open tab (via osascript)
+   # Wait 3s for image load
+   # Extract: execute javascript "canvas.toDataURL('image/png')"
+   # Close tab
+   # Decode base64 → save to file
+   ```
+
+   Chrome carries full Google auth cookies, bypassing CORS and cookie extraction.
+   This method never has cookie expiry issues.
+
+3. **Batch download**: Loop through all URLs with 3s delay per image.
+
+### Alternative B: Verify with context.request (Playwright)
 
 Before extracting cookies, verify the URL is valid using `browser_run_code`:
 ```js
