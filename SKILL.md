@@ -1,7 +1,7 @@
 ---
 name: notebook-bridge
 description: This skill should be used when the user asks to "upload to NotebookLM", "add source to notebook", "ask NotebookLM", "generate audio overview", "generate slide deck", "產生簡報", "上傳到 NotebookLM", "問 NotebookLM", "產生語音摘要", "產生資訊圖表", or discusses using NotebookLM as a knowledge base, uploading research data, or generating content from notebooks.
-version: 0.1.0
+version: 0.2.0
 tools: mcp__playwright__browser_navigate,mcp__playwright__browser_snapshot,mcp__playwright__browser_click,mcp__playwright__browser_type,mcp__playwright__browser_wait_for,mcp__playwright__browser_file_upload,mcp__playwright__browser_evaluate
 argument-hint: <action> [notebook name] [content/URL]
 ---
@@ -15,6 +15,17 @@ ARGUMENTS: The action to perform, notebook name, and content/URL if applicable.
 
 **CRITICAL**: Use Playwright tools ONLY. BrowserTools MCP cannot see Playwright's browser.
 Always use `browser_snapshot` to locate elements — never hardcode refs (they change each page load).
+
+## Config
+
+| Parameter | Value | Used In |
+|-----------|-------|---------|
+| Base URL | `https://notebooklm.google.com/` | Flow A, B, auth check |
+| Source processing timeout | 60s (large files: 90s) | Flow C, D, E |
+| Chat response timeout | 60s (complex: 90s) | Flow F |
+| Studio generation timeout | Audio/Video: 120s, others: 60s | Flow G |
+| Batch operation delay | 5s between items | Batch upload |
+| Rate limit retry wait | 10s | Error handling |
 
 ## Step 0 — Check Memory
 
@@ -145,11 +156,13 @@ Before any source/chat/studio action, verify a notebook is open:
 
 ## Error Handling
 
-- **Login required**: If snapshot shows login page → inform user to log in manually in
-  Playwright's browser first, then retry
-- **Source processing stuck**: Wait up to 60s, then snapshot to check status
+Quick reference for common issues. See `references/troubleshooting.md` for detailed
+symptoms, solutions, and step-by-step recovery procedures.
+
+- **Login required**: Inform user to log in manually in Playwright's browser, then retry
+- **Source processing stuck**: Wait up to 90s, snapshot to check for error messages
 - **Dialog not found**: Take fresh snapshot — UI may have changed. Record new pattern to memory
-- **Rate limit**: NotebookLM may throttle. Wait 10s and retry once
+- **Rate limit**: Wait 10s and retry once. Check daily limits in Source Limits table above
 
 ## Step 3 — Record Learnings
 
@@ -164,6 +177,7 @@ Format: `- **[Topic]**: [What was learned] (date: YYYY-MM-DD)`
 ## Additional Resources
 
 ### Reference Files
+- **`references/troubleshooting.md`** — Detailed error symptoms, solutions, and recovery procedures
 - **`references/ui-patterns.md`** — Known UI element patterns and selectors
 
 ### Memory Files
