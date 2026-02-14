@@ -1,8 +1,8 @@
 ---
 name: notebook-bridge
 description: This skill should be used when the user asks to "upload to NotebookLM", "add source to notebook", "ask NotebookLM", "generate audio overview", "generate slide deck", "download from NotebookLM", "下載 NotebookLM 內容", "產生簡報", "上傳到 NotebookLM", "問 NotebookLM", "產生語音摘要", "產生資訊圖表", or discusses using NotebookLM as a knowledge base, uploading research data, generating content from notebooks, or downloading generated content.
-version: 0.3.0
-tools: mcp__playwright__browser_navigate,mcp__playwright__browser_snapshot,mcp__playwright__browser_click,mcp__playwright__browser_type,mcp__playwright__browser_wait_for,mcp__playwright__browser_file_upload,mcp__playwright__browser_evaluate,mcp__playwright__browser_run_code
+version: 0.3.1
+tools: Bash, Write, mcp__playwright__browser_navigate, mcp__playwright__browser_snapshot, mcp__playwright__browser_click, mcp__playwright__browser_type, mcp__playwright__browser_wait_for, mcp__playwright__browser_file_upload, mcp__playwright__browser_evaluate, mcp__playwright__browser_run_code
 argument-hint: <action> [notebook name] [content/URL]
 ---
 
@@ -223,32 +223,23 @@ These headers are **required** — without them the server returns HTML instead 
 | `curl` without `Referer`/`Sec-Fetch-*` | Returns HTML instead of image |
 | CDP `Browser.setDownloadBehavior` | Playwright MCP blocks CDP browser-level targets |
 
-### Alternative A: Chrome AppleScript (Recommended when Playwright unavailable)
+### Alternative A: Native Save Dialog via macos-ui-automation (Recommended when Playwright unavailable)
 
-When Playwright MCP is disconnected but Chrome is logged into Google:
+When Playwright MCP is disconnected but Chrome is logged into Google, use the
+**macos-ui-automation** skill to handle downloads via native macOS dialogs:
 
-1. **Find image URLs** via AppleScript JS in the NotebookLM tab:
-   ```applescript
-   execute theTab javascript "
-       Array.from(document.querySelectorAll('img'))
-       .filter(i => i.src.includes('lh3.googleusercontent.com/notebooklm'))
-       .map(i => i.src)
-   "
-   ```
+1. **Find and click download button** via Chrome AppleScript:
+   Use the `macos-ui-automation` skill's Chrome JS pattern to find the download/share
+   button in NotebookLM's Studio panel and click it.
 
-2. **For each URL**, open in new Chrome tab → wait → canvas extract → close:
-   ```python
-   # Open tab (via osascript)
-   # Wait 3s for image load
-   # Extract: execute javascript "canvas.toDataURL('image/png')"
-   # Close tab
-   # Decode base64 → save to file
-   ```
+2. **Handle native save dialog** via System Events:
+   Follow `macos-ui-automation` § Step 3 — set filename, select location, click save.
 
-   Chrome carries full Google auth cookies, bypassing CORS and cookie extraction.
-   This method never has cookie expiry issues.
+3. **Batch download**: Loop through content items, handling one save dialog per item.
 
-3. **Batch download**: Loop through all URLs with 3s delay per image.
+This approach is simpler than canvas+base64 extraction, works for any file type,
+and avoids encoding/decoding overhead. See `macos-ui-automation` SKILL.md for full
+AppleScript patterns and dialog element references.
 
 ### Alternative B: Verify with context.request (Playwright)
 
@@ -286,6 +277,25 @@ Edit: ~/.claude/skills/notebook-bridge/memory/learnings.md
 ```
 
 Format: `- **[Topic]**: [What was learned] (date: YYYY-MM-DD)`
+
+## Continuous Improvement
+
+This skill evolves with each use. After every invocation:
+
+1. **Reflect** — Identify what worked, what caused friction, and any unexpected issues
+2. **Record** — Append a concise lesson to `lessons.md` in this skill's directory
+3. **Refine** — When a pattern recurs (2+ times), update SKILL.md directly
+
+### lessons.md Entry Format
+
+```
+### YYYY-MM-DD — Brief title
+- **Friction**: What went wrong or was suboptimal
+- **Fix**: How it was resolved
+- **Rule**: Generalizable takeaway for future invocations
+```
+
+Accumulated lessons signal when to run `/skill-optimizer` for a deeper structural review.
 
 ## Additional Resources
 
