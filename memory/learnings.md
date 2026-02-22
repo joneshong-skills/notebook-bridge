@@ -20,7 +20,10 @@ Format: `- **[Topic]**: [Learning] (date: YYYY-MM-DD)`
 - **Critical download headers**: `Referer: https://notebooklm.google.com/` and `Sec-Fetch-Dest: image` + `Sec-Fetch-Mode: no-cors` + `Sec-Fetch-Site: cross-site` are REQUIRED. Without them, `lh3.googleusercontent.com` returns HTML instead of the image (date: 2026-02-11)
 - **Cookie extraction**: Use `page.context().cookies('https://lh3.googleusercontent.com')` + `page.context().cookies('https://google.com')`, deduplicate by name, build `name=value; ...` string (date: 2026-02-11)
 - **Infographic image hosting**: Images at `lh3.googleusercontent.com/notebooklm/` with URL params like `=w2752-d-h1536-mp2?authuser=0` (date: 2026-02-11)
-- **Failed approaches**: Playwright download event (blocked by macOS native dialog), CDP `setDownloadBehavior` (browser target not allowed), `page.evaluate(fetch())` (CORS blocks cross-origin), canvas `toDataURL` (cross-origin taints canvas), curl without Referer/Sec-Fetch headers (returns HTML) (date: 2026-02-11)
+- **Failed approaches**: Playwright download event (blocked by macOS native dialog), CDP `setDownloadBehavior` (browser target not allowed), `page.evaluate(fetch())` (CORS blocks cross-origin), canvas `toDataURL` in Playwright (cross-origin taints canvas), curl without Referer/Sec-Fetch headers (returns HTML), curl with cookies for slide URLs (403 redirect loop — cookies may expire) (date: 2026-02-11)
+- **Chrome AppleScript method (BEST)**: Open image URL in new Chrome tab → Chrome loads image with full auth → canvas `toDataURL()` works (same-origin after redirect to `rd-notebooklm` subdomain) → extract base64 → decode to PNG. No CORS, no cookie expiry. Batch: loop with 3s delay per image. (date: 2026-02-11)
+- **Slide deck structure**: Each slide is a separate image at `lh3.googleusercontent.com/notebooklm/` with `=w1376-h768` params. Click the slide deck item in Studio to render all slides, then extract img src URLs. (date: 2026-02-11)
+- **URL redirect pattern**: `lh3.googleusercontent.com/notebooklm/...` redirects to `lh3.googleusercontent.com/rd-notebooklm/...` when accessed with auth. The `rd-` prefix makes it same-origin for canvas extraction. (date: 2026-02-11)
 
 ## Functional Test Results (2026-02-11)
 

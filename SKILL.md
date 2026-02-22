@@ -16,6 +16,15 @@ ARGUMENTS: The action to perform, notebook name, and content/URL if applicable.
 **CRITICAL**: Use Playwright tools ONLY. BrowserTools MCP cannot see Playwright's browser.
 Always use `browser_snapshot` to locate elements — never hardcode refs (they change each page load).
 
+## Agent Delegation
+
+Delegate NotebookLM navigation and data extraction to the `browser` agent. All Playwright flows (A–H) should run inside the `browser` agent so Playwright MCP tools are available and the main context stays lean.
+
+```
+Main context (action classification, result handling, learnings recording)
+  └─ Task(subagent_type: browser, prompt: "Open NotebookLM notebook named 'Research 2026', add URL https://example.com as a source (Flow C), then return a snapshot confirming the source appeared in the Sources panel.")
+```
+
 ## Config
 
 | Parameter | Value | Used In |
